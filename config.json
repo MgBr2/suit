@@ -1,0 +1,33 @@
+{
+  "accessKey": "",
+  "buy": {
+    "bp_enough": true,
+    "buy_num": "1",
+    "coupon_token": "",
+    "device": "android",
+    "item_id": "114514",
+    "time_before": 0
+  },
+  "bili": {
+    "app_version": "",
+    "app_build_version": "",
+    "app_inner_version": "",
+    "tv_version": "1.5.0",
+    "x-bili-aurora-eid": ""
+  },
+  "cookies": {
+    "SESSDATA": "",
+    "bili_jct": "",
+    "DedeUserID": "",
+    "DedeUserID__ckMd5": "",
+    "sid": "",
+    "Buvid": ""
+  },
+  "phone": {
+    "android_version": "",
+    "android_api_level": "",
+    "build": "",
+    "chrome_version": "",
+    "device_name": ""
+  }
+}
