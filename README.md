@@ -1,4 +1,11 @@
-# 简介
+<h1 align="center">Bilibili 装扮抢购脚本</h1>
+<p align="center">基于 GO 语言编写的抢购脚本，包含扫码登录与自动匹配 UA 功能，无需抓包</p>
+<p align="center">
+<a href="https://github.com/KaguraMika/bili-suit-v3/releases/latest"><img src="https://img.shields.io/badge/LICENSE-GPL--3.0-blue" alt="License"></a>
+<a href="https://github.com/go-resty/resty/releases/latest"><img src="https://img.shields.io/badge/VERSION-3.1.0-brightgreen" alt="Release Version"></a>
+</p>
+
+## 简介
 
 **由于个人原因，此版本暂停开发（要是有人接手最好了喵~）**
 
@@ -10,6 +17,13 @@
 
 **已通过大量测试 ✅**
 
+# News
+* 切换至 APP 端API
+* 时间校准切换至 NTP
+* ~~提前生成表单与 Sign 值~~
+
+# Features
+
 # 使用方法
 1. 下载并解压 `Release` 中对应的文件，哪个平台就用哪个
 2. 填写 `config.json` 中的 `item_id` （装扮ID）
@@ -17,14 +31,14 @@
 4. 按照提示，在 APP 中访问 `https://api.bilibili.com/client_info`,
    并将所有信息复制并填入
 
-### 小提示：
+## 小提示：
 
-1. 使用 `-c` 可指定配置文件，例如: `./bili-suit-tool -c /etc/bili/1.json`
-2. 使用 `-i` 可指定装扮 ID，例如: `./bili-suit-tool -i 114514 `
-3. 使用 `-b` 可指定购买数量，例如: `./bili-suit-tool -b 19 `
-4. 使用 `-t` 可设置下单延迟, 正数延迟，负数延后，例如: `./bili-suit-tool -t -100 `
-5. `cookies` 必要参数留空可使用扫码登录
-6. `bp_enough` 为 `true` 时开启 b币余额校验，b币余额不足时不下单，为 `false` 将会忽略校验直接下单
+* 使用 `-c` 可指定配置文件，例如: `./bili-suit-tool -c /etc/bili/1.json`
+* 使用 `-i` 可指定装扮 ID，例如: `./bili-suit-tool -i 114514 `
+* 使用 `-b` 可指定购买数量，例如: `./bili-suit-tool -b 19 `
+* 使用 `-t` 可设置下单延迟, 正数延迟，负数延后，例如: `./bili-suit-tool -t -100 `
+* `cookies` 必要参数留空可使用扫码登录
+* `bp_enough` 为 `true` 时开启 b币余额校验，b币余额不足时不下单，为 `false` 将会忽略校验直接下单
 
 ## 配置文件
 
