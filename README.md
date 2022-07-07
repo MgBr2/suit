@@ -4,27 +4,25 @@
 <a href="https://github.com/KaguraMika/bili-suit-v3/releases/latest"><img src="https://img.shields.io/badge/LICENSE-GPL--3.0-blue" alt="License"></a>
 <a href="https://github.com/go-resty/resty/releases/latest"><img src="https://img.shields.io/badge/VERSION-3.1.0-brightgreen" alt="Release Version"></a>
 </p>
+<br><br>
 
 ## 简介
+由于个人原因，此版本暂停开发（要是有人接手最好了喵~）
 
-**由于个人原因，此版本暂停开发（要是有人接手最好了喵~）**
+尚未支持 IOS (懒～)
 
-**尚未支持 IOS (懒～)**
+傻瓜式，扫码登录，自动填写配置文件 (Mika真是太优雅了喵～)
 
-**傻瓜式，扫码登录，自动填写配置文件 (Mika真是太优雅了喵～)**
+尽量模拟了APP端抢购过程（风控 -1）
 
-**尽量模拟了APP端抢购过程（风控 -1）**
+已通过大量测试 ✅
 
-**已通过大量测试 ✅**
-
-# News
+## 更新
 * 切换至 APP 端API
 * 时间校准切换至 NTP
 * ~~提前生成表单与 Sign 值~~
 
-# Features
-
-# 使用方法
+## 使用方法
 1. 下载并解压 `Release` 中对应的文件，哪个平台就用哪个
 2. 填写 `config.json` 中的 `item_id` （装扮ID）
 3. 运行脚本: 在终端中运行 `./bili-suit-tool` (windows 运行 `./bili-suit-tool.exe`)
