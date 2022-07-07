@@ -28,13 +28,14 @@
 3. 运行脚本: 在终端中运行 `./bili-suit-tool` (windows 运行 `./bili-suit-tool.exe`)
 4. 按照提示，在 APP 中访问 `https://api.bilibili.com/client_info`,
    并将所有信息复制并填入
+5. 等待开售
 
 ## 小提示：
 
 * 使用 `-c` 可指定配置文件，例如: `./bili-suit-tool -c /etc/bili/1.json`
 * 使用 `-i` 可指定装扮 ID，例如: `./bili-suit-tool -i 114514 `
 * 使用 `-b` 可指定购买数量，例如: `./bili-suit-tool -b 19 `
-* 使用 `-t` 可设置下单延迟, 正数延迟，负数延后，例如: `./bili-suit-tool -t -100 `
+* 使用 `-t` 可设置下单延迟, 正数提前，负数延后，例如: `./bili-suit-tool -t -100 `
 * `cookies` 必要参数留空可使用扫码登录
 * `bp_enough` 为 `true` 时开启 b币余额校验，b币余额不足时不下单，为 `false` 将会忽略校验直接下单
 
