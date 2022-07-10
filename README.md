@@ -1,8 +1,8 @@
 <h1 align="center">Bilibili 装扮抢购脚本</h1>
 <p align="center">基于 GO 语言编写的抢购脚本，包含扫码登录与自动匹配 UA 功能，无需抓包</p>
 <p align="center">
-<a href="https://github.com/KaguraMika/bili-suit-v3/releases/latest"><img src="https://img.shields.io/badge/LICENSE-GPL--3.0-blue" alt="License"></a>
-<a href="https://github.com/go-resty/resty/releases/latest"><img src="https://img.shields.io/badge/VERSION-3.1.0-brightgreen" alt="Release Version"></a>
+<a href="https://github.com/KaguraMika/bili-suit-v3/blob/main/LICENSE"><img src="https://img.shields.io/badge/LICENSE-GPL--3.0-blue" alt="License"></a>
+<a href="https://github.com/KaguraMika/bili-suit-v3/releases/latest"><img src="https://img.shields.io/badge/VERSION-3.1.0-brightgreen" alt="Release Version"></a>
 </p>
 <br><br>
 
