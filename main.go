@@ -129,6 +129,7 @@ func main() {
 	rank()
 	stat()
 	coupon()
+	state()
 
 	// 输出编号列表
 	outPutRank()
@@ -159,7 +160,6 @@ func main() {
 	detail()
 	go asset()
 	go stat()
-	go state()
 	go rank()
 	go coupon()
 
