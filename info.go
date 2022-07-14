@@ -182,6 +182,17 @@ type SuitAsset struct {
 	} `json:"data"`
 }
 
+type Reserve struct {
+	Code    int    `json:"code"`
+	Message string `json:"message"`
+	Ttl     int    `json:"ttl"`
+	Data    struct {
+		Reserved     bool `json:"reserved"`
+		ReserveCount int  `json:"reserve_count"`
+		ReserveState bool `json:"reserve_state"`
+	} `json:"data"`
+}
+
 //type CreatePayload struct {
 //	AccessKey   string `json:"access_key"`
 //	AddMonth    string `json:"add_month"`
