@@ -311,7 +311,7 @@ func outPrintDetail() {
 
 // 输出 Rank
 func outPutRank() {
-	log.Println("当前装扮列表:")
+	log.Println("装扮排名列表:")
 	fmt.Println("")
 
 	if len(rankInfo.Data.Rank) == 0 {
