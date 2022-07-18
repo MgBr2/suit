@@ -282,7 +282,7 @@ func state() {
 
 	checkErr(err)
 
-	if reserveInfo.Data.Reserved == false && reserveInfo.Data.ReserveState == true {
+	if reserveInfo.Data.Reserved == false && reserveInfo.Data.ReserveState == true && config.Buy.Reserve == true{
 		log.Println("你还没有预约哦，Mika 这就帮你预约喵～")
 		reserve()
 	} else if reserveInfo.Data.Reserved == true && reserveInfo.Data.ReserveState == true {
