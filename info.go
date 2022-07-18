@@ -19,6 +19,7 @@ type Config struct {
 		Device      string `json:"device"`
 		ItemId      string `json:"item_id"`
 		TimeBefore  int    `json:"time_before"`
+		Reserve     bool   `json:"reserve"`
 	} `json:"buy"`
 	Bili struct {
 		AppVersion      string `json:"app_version"`
@@ -190,6 +191,32 @@ type Reserve struct {
 		Reserved     bool `json:"reserved"`
 		ReserveCount int  `json:"reserve_count"`
 		ReserveState bool `json:"reserve_state"`
+	} `json:"data"`
+}
+
+type Coupon struct {
+	Code    int    `json:"code"`
+	Message string `json:"message"`
+	Ttl     int    `json:"ttl"`
+	Data    []struct {
+		Title           string        `json:"title"`
+		CouponToken     string        `json:"coupon_token"`
+		CouponType      int           `json:"coupon_type"`
+		FullAmount      int           `json:"full_amount"`
+		Allowance       int           `json:"allowance"`
+		Discount        int           `json:"discount"`
+		LeftUsableTimes int           `json:"left_usable_times"`
+		OrderId         string        `json:"order_id"`
+		TimeLimit       int           `json:"time_limit"`
+		StartTime       int           `json:"start_time"`
+		ExpireTime      int           `json:"expire_time"`
+		Explain         string        `json:"explain"`
+		LimitInfo       string        `json:"limit_info"`
+		LimitRule       interface{}   `json:"limit_rule"`
+		ItemInfo        interface{}   `json:"item_info"`
+		UsedItems       []interface{} `json:"used_items"`
+		State           int           `json:"state"`
+		PriorityItem    int           `json:"priority_item"`
 	} `json:"data"`
 }
 
