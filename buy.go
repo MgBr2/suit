@@ -8,8 +8,9 @@ import (
 )
 
 var (
-	navs    = &Navs{}
-	details = &Details{}
+	navs        = &Navs{}
+	details     = &Details{}
+	checkCoupon bool
 )
 
 func nav() {
@@ -332,7 +333,7 @@ func reserve() {
 	}
 }
 
-// 优惠券（有优惠券时的情况未收集!）
+// 优惠券（有多张优惠券时的情况未收集!）
 func coupon() {
 	headers := map[string]string{
 		"Content-Type":       "application/json, text/plain, */*",
@@ -359,15 +360,31 @@ func coupon() {
 		"ts":           strconv.FormatInt(time.Now().Unix(), 10),
 	}
 
+	c := &Coupon{}
 	sign := appSign(params)
 	params["sign"] = sign
 
 	_, err := client.R().
 		SetHeaders(headers).
+		SetResult(c).
 		SetQueryParams(params).
 		Get("/garb/coupon/usable")
 
 	checkErr(err)
+
+	// 还要再看看
+	if len(c.Data) != 0 && checkCoupon == false {
+		checkCoupon = true
+		log.Println("您有优惠券可以使用喵～")
+		config.Buy.CouponToken = c.Data[0].CouponToken
+		writeConfig()
+	} else if len(c.Data) == 0 && checkCoupon == false {
+		checkCoupon = true
+		if config.Buy.CouponToken != "" {
+			config.Buy.CouponToken = ""
+			writeConfig()
+		}
+	}
 }
 
 // 创建订单
@@ -507,7 +524,6 @@ Loop:
 				log.Fatalln("失败次数已达到五次，退出执行...")
 			}
 			log.Println(r)
-			task.Reset(500 * time.Millisecond)
 			go coupon()
 		case 26135: //当前抢购人数过多，失败四次或者锁四秒后能够购买
 			errorTime += 1
@@ -516,7 +532,6 @@ Loop:
 				log.Fatalln("失败次数已达到五次，退出执行...")
 			}
 			log.Println(r)
-			task.Reset(500 * time.Millisecond)
 			go coupon()
 		case 69949: //老风控代码，疑似封锁设备
 			errorTime += 1
