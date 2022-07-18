@@ -6,7 +6,8 @@
     "coupon_token": "",
     "device": "android",
     "item_id": "114514",
-    "time_before": 0
+    "time_before": 0,
+    "reserve": true
   },
   "bili": {
     "app_version": "",
