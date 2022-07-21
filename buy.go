@@ -15,7 +15,8 @@ var (
 
 func nav() {
 	headers := map[string]string{
-		"Content-Type":       "application/json, text/plain, */*",
+		"accept":             "application/json, text/plain, */*",
+		"content-type":       "application/json",
 		"native_api_from":    "h5",
 		"refer":              "https://www.bilibili.com/h5/mall/home?navhide=1&from=myservice&native.theme=1",
 		"env":                "prod",
@@ -52,7 +53,8 @@ func nav() {
 // popup, 未知用途
 func popup() {
 	headers := map[string]string{
-		"Content-Type":       "application/json, text/plain, */*",
+		"accept":             "application/json, text/plain, */*",
+		"content-type":       "application/json",
 		"native_api_from":    "h5",
 		"refer":              "https://www.bilibili.com/h5/mall/home?navhide=1&from=myservice&native.theme=1",
 		"env":                "prod",
@@ -88,7 +90,8 @@ func popup() {
 // 装扮信息
 func detail() {
 	headers := map[string]string{
-		"Content-Type":       "application/json, text/plain, */*",
+		"accept":             "application/json, text/plain, */*",
+		"content-type":       "application/json",
 		"native_api_from":    "h5",
 		"refer":              fmt.Sprintf("https://www.bilibili.com/h5/mall/suit/detail?id=%v&navhide=1", config.Buy.ItemId),
 		"env":                "prod",
@@ -127,6 +130,8 @@ func detail() {
 // 拥有的装扮信息
 func asset() {
 	headers := map[string]string{
+		"accept":             "application/json, text/plain, */*",
+		"content-type":       "application/json",
 		"native_api_from":    "h5",
 		"refer":              fmt.Sprintf("https://www.bilibili.com/h5/mall/suit/detail?id=%v&navhide=1", config.Buy.ItemId),
 		"env":                "prod",
@@ -166,7 +171,8 @@ func asset() {
 // 装扮排名
 func rank() {
 	headers := map[string]string{
-		"Content-Type":       "application/json, text/plain, */*",
+		"accept":             "application/json, text/plain, */*",
+		"content-type":       "application/json",
 		"native_api_from":    "h5",
 		"refer":              fmt.Sprintf("https://www.bilibili.com/h5/mall/suit/detail?id=%v&navhide=1", config.Buy.ItemId),
 		"env":                "prod",
@@ -208,7 +214,8 @@ func rank() {
 // 关于这个装扮的订单情况
 func stat() {
 	headers := map[string]string{
-		"Content-Type":       "application/json, text/plain, */*",
+		"accept":             "application/json, text/plain, */*",
+		"content-type":       "application/json",
 		"native_api_from":    "h5",
 		"refer":              fmt.Sprintf("https://www.bilibili.com/h5/mall/suit/detail?id=%v&navhide=1", config.Buy.ItemId),
 		"env":                "prod",
@@ -246,7 +253,8 @@ func stat() {
 // 预约人数及预约状态
 func state() {
 	headers := map[string]string{
-		"Content-Type":       "application/json, text/plain, */*",
+		"accept":             "application/json, text/plain, */*",
+		"content-type":       "application/json",
 		"native_api_from":    "h5",
 		"refer":              fmt.Sprintf("https://www.bilibili.com/h5/mall/suit/detail?id=%v&navhide=1", config.Buy.ItemId),
 		"env":                "prod",
@@ -282,17 +290,24 @@ func state() {
 
 	checkErr(err)
 
-	if reserveInfo.Data.Reserved == false && reserveInfo.Data.ReserveState == true && config.Buy.Reserve == true{
-		log.Println("你还没有预约哦，Mika 这就帮你预约喵～")
-		reserve()
-	} else if reserveInfo.Data.Reserved == true && reserveInfo.Data.ReserveState == true {
+	log.Printf("当前装扮预约人数: %v.", reserveInfo.Data.ReserveCount)
+
+	if reserveInfo.Data.Reserved == false && reserveInfo.Data.ReserveState == true {
+		if config.Buy.Reserve == true {
+			log.Println("你还没有预约这个装扮哦，Mika 这就帮你预约喵～")
+			reserve()
+		} else {
+			log.Println("你还没有预约这个装扮哦，Mika 建议你预约一下喵～")
+		}
+	} else if reserveInfo.Data.Reserved == true {
 		log.Println("当前装扮已经预约了喵～")
 	}
 }
 
 func reserve() {
 	headers := map[string]string{
-		"Content-Type":       "application/json, text/plain, */*",
+		"accept":             "application/json, text/plain, */*",
+		"content-type":       "application/json",
 		"native_api_from":    "h5",
 		"refer":              fmt.Sprintf("https://www.bilibili.com/h5/mall/suit/detail?id=%v&navhide=1", config.Buy.ItemId),
 		"env":                "prod",
@@ -336,7 +351,8 @@ func reserve() {
 // 优惠券（有多张优惠券时的情况未收集!）
 func coupon() {
 	headers := map[string]string{
-		"Content-Type":       "application/json, text/plain, */*",
+		"accept":             "application/json, text/plain, */*",
+		"content-type":       "application/json",
 		"native_api_from":    "h5",
 		"refer":              fmt.Sprintf("https://www.bilibili.com/h5/mall/suit/detail?id=%v&navhide=1", config.Buy.ItemId),
 		"env":                "prod",
@@ -395,6 +411,8 @@ Loop:
 		task := time.NewTimer(1 * time.Second)
 
 		headers := map[string]string{
+			"accept":             "application/json, text/plain, */*",
+			"content-type":       "application/x-www-form-urlencoded; charset=utf-8",
 			"native_api_from":    "h5",
 			"refer":              fmt.Sprintf("https://www.bilibili.com/h5/mall/suit/detail?id=%v&navhide=1", config.Buy.ItemId),
 			"env":                "prod",
@@ -416,6 +434,8 @@ Loop:
 			"csrf":         config.Cookies.BiliJct,
 			"currency":     "bp",
 			"disable_rcmd": "0",
+			"from":         "",
+			"from_id":      "",
 			"item_id":      config.Buy.ItemId,
 			"platform":     config.Buy.Device,
 			"statistics":   statistics,
@@ -463,20 +483,11 @@ Loop:
 		r, err := client.R().
 			SetHeaders(headers).
 			SetFormData(data).
-			//SetBody(j).
 			SetResult(creates).
 			EnableTrace().
 			Post("/garb/v2/trade/create")
 
 		checkErr(err)
-
-		//fmt.Println(r.Request.Header)
-		//fmt.Println()
-		//fmt.Println(r.Request.URL)
-		//fmt.Println()
-		//fmt.Println(r.Request.Body)
-		//fmt.Println()
-		//fmt.Println(r.Request.FormData)
 
 		log.Printf("本次请求用时: %v，时间差: %v ms，时间调整:%v ms.", r.Request.TraceInfo().TotalTime, diffTime, config.Buy.TimeBefore)
 
@@ -492,6 +503,9 @@ Loop:
 				log.Println(r)
 			}
 			break Loop
+		case -3:
+			log.Println(r)
+			log.Fatalln("请将此问题上报给 Mika.")
 		case -400:
 			log.Fatalln(r)
 		case -403: //号被封了
@@ -560,7 +574,8 @@ Loop:
 		task := time.NewTimer(500 * time.Millisecond)
 
 		headers := map[string]string{
-			"Content-Type":       "application/json, text/plain, */*",
+			"accept":             "application/json, text/plain, */*",
+			"content-type":       "application/json",
 			"native_api_from":    "h5",
 			"refer":              fmt.Sprintf("https://www.bilibili.com/h5/mall/suit/detail?id=%v&navhide=1", config.Buy.ItemId),
 			"env":                "prod",
@@ -625,7 +640,8 @@ Loop:
 // 钱包余额
 func wallet() {
 	headers := map[string]string{
-		"Content-Type":       "application/json, text/plain, */*",
+		"accept":             "application/json, text/plain, */*",
+		"content-type":       "application/json",
 		"native_api_from":    "h5",
 		"refer":              fmt.Sprintf("https://www.bilibili.com/h5/mall/suit/detail?id=%v&navhide=1", config.Buy.ItemId),
 		"env":                "prod",
@@ -658,7 +674,8 @@ func wallet() {
 // 查询编号等信息
 func suitAsset() {
 	headers := map[string]string{
-		"Content-Type":       "application/json, text/plain, */*",
+		"accept":             "application/json, text/plain, */*",
+		"content-type":       "application/json",
 		"native_api_from":    "h5",
 		"refer":              fmt.Sprintf("https://www.bilibili.com/h5/mall/suit/detail?id=%v&navhide=1", config.Buy.ItemId),
 		"env":                "prod",
