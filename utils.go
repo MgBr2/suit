@@ -48,7 +48,7 @@ Loop:
 		f := v.Field(i)
 		if f.String() == "" {
 			fmt.Println()
-			log.Println("检测到手机信息配置缺失，请检查配置文件，在APP中打开此链接，复制并填写整个响应将会自动匹配喵～")
+			log.Println("检测到配置缺失，请检查配置文件，在APP中打开此链接，复制并填写整个响应将会自动匹配喵～")
 			log.Println("提示: 可以找机器人客服发送此链接，点开即可喵～")
 			fmt.Println("\n\thttps://api.bilibili.com/client_info")
 			fmt.Println()
@@ -61,7 +61,11 @@ Loop:
 
 	// 检测版本
 	if config.Bili.TvVersion == "" || config.Bili.AppVersion == "" {
-		log.Fatalln("版本信息为空，请重新填写喵！")
+		log.Println("版本信息为空，请重新填写喵！")
+		log.Println("检测到配置缺失，请检查配置文件，在APP中打开此链接，复制并填写整个响应将会自动匹配喵～")
+		log.Println("提示: 可以找机器人客服发送此链接，点开即可喵～")
+		formatConfig()
+		goto Loop
 	}
 
 	// 检测设备虚拟ID
