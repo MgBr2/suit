@@ -1,211 +1,211 @@
 package main
 
 import (
+	"encoding/json"
 	"fmt"
+	"io"
 	"log"
+	"net/http"
+	"net/url"
 	"strconv"
+	"strings"
 	"time"
 )
 
 var (
-	navs        = &Navs{}
-	details     = &Details{}
-	checkCoupon bool
+	navs    = &Navs{}
+	details = &Details{}
+	coupons = &Coupon{}
 )
 
+// 登录状态
 func nav() {
-	headers := map[string]string{
-		"accept":             "application/json, text/plain, */*",
-		"content-type":       "application/json",
-		"native_api_from":    "h5",
-		"refer":              "https://www.bilibili.com/h5/mall/home?navhide=1&from=myservice&native.theme=1",
-		"env":                "prod",
-		"app-key":            "android64",
-		"user-agent":         appUserAgent,
-		"x-bili-trace-id":    genTraceID(),
-		"x-bili-aurora-eid":  config.Bili.XBiliAuroraEid,
-		"x-bili-mid":         config.Cookies.DedeUserID,
-		"x-bili-aurora-zone": "",
-		"bili-bridge-engine": "cronet",
-	}
+	req, err := http.NewRequest("GET", "https://api.bilibili.com/x/web-interface/nav", nil)
+	checkErr(err)
 
-	params := map[string]string{
-		"access_key":   config.AccessKey,
-		"appkey":       "1d8b6e7d45233436",
-		"csrf":         config.Cookies.BiliJct,
-		"disable_rcmd": "0",
-		"statistics":   statistics,
-		"ts":           strconv.FormatInt(time.Now().Unix(), 10),
-	}
+	req = commonHeaders(req, "https://www.bilibili.com/h5/mall/home?navhide=1&from=myservice&native.theme=1")
 
-	sign := appSign(params)
-	params["sign"] = sign
+	u := url.Values{}
 
-	_, err := client.R().
-		SetHeaders(headers).
-		SetResult(navs).
-		SetQueryParams(params).
-		Get("/web-interface/nav")
+	u.Add("access_key", config.AccessKey)
+	u.Add("appKey", "1d8b6e7d45233436")
+	u.Add("csrf", config.Cookies.BiliJct)
+	u.Add("disable_rcmd", "0")
+	u.Add("statistics", statistics)
+	u.Add("ts", strconv.FormatInt(time.Now().Unix(), 10))
 
+	// 拼接 Sign, 并格式化字符串
+	params, err := url.QueryUnescape(fmt.Sprintf("%v&sign=%v", u.Encode(), appSign(u)))
+	checkErr(err)
+
+	// 注入灵魂
+	req.URL.RawQuery = params
+
+	// 执行请求
+	resp, err := client.Do(req)
+	checkErr(err)
+
+	// 读取响应
+	body, err := io.ReadAll(resp.Body)
+	checkErr(err)
+
+	// 延迟关闭
+	defer func(Body io.ReadCloser) {
+		err = Body.Close()
+		checkErr(err)
+	}(resp.Body)
+
+	// 解析 JSON
+	err = json.Unmarshal(body, navs)
 	checkErr(err)
 }
 
 // popup, 未知用途
 func popup() {
-	headers := map[string]string{
-		"accept":             "application/json, text/plain, */*",
-		"content-type":       "application/json",
-		"native_api_from":    "h5",
-		"refer":              "https://www.bilibili.com/h5/mall/home?navhide=1&from=myservice&native.theme=1",
-		"env":                "prod",
-		"app-key":            "android64",
-		"user-agent":         appUserAgent,
-		"x-bili-trace-id":    genTraceID(),
-		"x-bili-aurora-eid":  config.Bili.XBiliAuroraEid,
-		"x-bili-mid":         config.Cookies.DedeUserID,
-		"x-bili-aurora-zone": "",
-		"bili-bridge-engine": "cronet",
-	}
+	req, err := http.NewRequest("GET", "https://api.bilibili.com/x/garb/popup", nil)
+	checkErr(err)
 
-	params := map[string]string{
-		"access_key":   config.AccessKey,
-		"appkey":       "1d8b6e7d45233436",
-		"csrf":         config.Cookies.BiliJct,
-		"disable_rcmd": "0",
-		"statistics":   statistics,
-		"ts":           strconv.FormatInt(time.Now().Unix(), 10),
-	}
+	req = commonHeaders(req, "https://www.bilibili.com/h5/mall/home?navhide=1&from=myservice&native.theme=1")
 
-	sign := appSign(params)
-	params["sign"] = sign
+	u := url.Values{}
 
-	_, err := client.R().
-		SetHeaders(headers).
-		SetQueryParams(params).
-		Get("/garb/popup")
+	u.Add("access_key", config.AccessKey)
+	u.Add("appKey", "1d8b6e7d45233436")
+	u.Add("csrf", config.Cookies.BiliJct)
+	u.Add("disable_rcmd", "0")
+	u.Add("statistics", statistics)
+	u.Add("ts", strconv.FormatInt(time.Now().Unix(), 10))
 
+	// 拼接 Sign, 并格式化字符串
+	params, err := url.QueryUnescape(fmt.Sprintf("%v&sign=%v", u.Encode(), appSign(u)))
+	checkErr(err)
+
+	// 注入灵魂
+	req.URL.RawQuery = params
+
+	// 执行请求
+	_, err = client.Do(req)
 	checkErr(err)
 }
 
 // 装扮信息
 func detail() {
-	headers := map[string]string{
-		"accept":             "application/json, text/plain, */*",
-		"content-type":       "application/json",
-		"native_api_from":    "h5",
-		"refer":              fmt.Sprintf("https://www.bilibili.com/h5/mall/suit/detail?id=%v&navhide=1", config.Buy.ItemId),
-		"env":                "prod",
-		"app-key":            "android64",
-		"user-agent":         appUserAgent,
-		"x-bili-trace-id":    genTraceID(),
-		"x-bili-aurora-eid":  config.Bili.XBiliAuroraEid,
-		"x-bili-mid":         config.Cookies.DedeUserID,
-		"x-bili-aurora-zone": "",
-		"bili-bridge-engine": "cronet",
-	}
+	req, err := http.NewRequest("GET", "https://api.bilibili.com/x/garb/v2/mall/suit/detail", nil)
+	checkErr(err)
 
-	params := map[string]string{
-		"access_key":   config.AccessKey,
-		"appkey":       "1d8b6e7d45233436",
-		"csrf":         config.Cookies.BiliJct,
-		"disable_rcmd": "0",
-		"item_id":      config.Buy.ItemId,
-		"part":         "suit",
-		"statistics":   statistics,
-		"ts":           strconv.FormatInt(time.Now().Unix(), 10),
-	}
+	req = commonHeaders(req, fmt.Sprintf("https://www.bilibili.com/h5/mall/suit/detail?id=%v&navhide=1&f_source=shop&from=feed.card", config.Buy.ItemId))
 
-	sign := appSign(params)
-	params["sign"] = sign
+	u := url.Values{}
 
-	_, err := client.R().
-		SetHeaders(headers).
-		SetQueryParams(params).
-		SetResult(details).
-		Get("/garb/v2/mall/suit/detail")
+	u.Add("access_key", config.AccessKey)
+	u.Add("appKey", "1d8b6e7d45233436")
+	u.Add("csrf", config.Cookies.BiliJct)
+	u.Add("disable_rcmd", "0")
+	u.Add("from", "")
+	u.Add("from_id", "")
+	u.Add("item_id", config.Buy.ItemId)
+	u.Add("part", "suit")
+	u.Add("statistics", statistics)
+	u.Add("ts", strconv.FormatInt(time.Now().Unix(), 10))
 
+	// 拼接 Sign, 并格式化字符串
+	params, err := url.QueryUnescape(fmt.Sprintf("%v&sign=%v", u.Encode(), appSign(u)))
+	checkErr(err)
+
+	// 注入灵魂
+	req.URL.RawQuery = params
+
+	// 执行请求
+	resp, err := client.Do(req)
+	checkErr(err)
+
+	// 读取响应
+	body, err := io.ReadAll(resp.Body)
+	checkErr(err)
+
+	// 延迟关闭
+	defer func(Body io.ReadCloser) {
+		err = Body.Close()
+		checkErr(err)
+	}(resp.Body)
+
+	// 解析 JSON
+	err = json.Unmarshal(body, details)
 	checkErr(err)
 }
 
 // 拥有的装扮信息
 func asset() {
-	headers := map[string]string{
-		"accept":             "application/json, text/plain, */*",
-		"content-type":       "application/json",
-		"native_api_from":    "h5",
-		"refer":              fmt.Sprintf("https://www.bilibili.com/h5/mall/suit/detail?id=%v&navhide=1", config.Buy.ItemId),
-		"env":                "prod",
-		"app-key":            "android64",
-		"user-agent":         appUserAgent,
-		"x-bili-trace-id":    genTraceID(),
-		"x-bili-aurora-eid":  config.Bili.XBiliAuroraEid,
-		"x-bili-mid":         config.Cookies.DedeUserID,
-		"x-bili-aurora-zone": "",
-		"bili-bridge-engine": "cronet",
-	}
+	assests := &Asset{}
 
-	params := map[string]string{
-		"access_key":   config.AccessKey,
-		"appkey":       "1d8b6e7d45233436",
-		"csrf":         config.Cookies.BiliJct,
-		"disable_rcmd": "0",
-		"item_id":      config.Buy.ItemId,
-		"part":         "suit",
-		"statistics":   statistics,
-		"ts":           strconv.FormatInt(time.Now().Unix(), 10),
-	}
+	req, err := http.NewRequest("GET", "https://api.bilibili.com/x/garb/user/asset", nil)
+	checkErr(err)
 
-	sign := appSign(params)
-	params["sign"] = sign
-	response := &Asset{}
+	req = commonHeaders(req, fmt.Sprintf("https://www.bilibili.com/h5/mall/suit/detail?id=%v&navhide=1&f_source=shop&from=feed.card", config.Buy.ItemId))
 
-	_, err := client.R().
-		SetHeaders(headers).
-		SetQueryParams(params).
-		SetResult(response).
-		Get("/garb/user/asset")
+	u := url.Values{}
 
+	u.Add("access_key", config.AccessKey)
+	u.Add("appKey", "1d8b6e7d45233436")
+	u.Add("csrf", config.Cookies.BiliJct)
+	u.Add("disable_rcmd", "0")
+	u.Add("item_id", config.Buy.ItemId)
+	u.Add("part", "suit")
+	u.Add("statistics", statistics)
+	u.Add("ts", strconv.FormatInt(time.Now().Unix(), 10))
+
+	// 拼接 Sign, 并格式化字符串
+	params, err := url.QueryUnescape(fmt.Sprintf("%v&sign=%v", u.Encode(), appSign(u)))
+	checkErr(err)
+
+	// 注入灵魂
+	req.URL.RawQuery = params
+
+	// 执行请求
+	resp, err := client.Do(req)
+	checkErr(err)
+
+	// 读取响应
+	body, err := io.ReadAll(resp.Body)
+	checkErr(err)
+
+	// 延迟关闭
+	defer func(Body io.ReadCloser) {
+		err = Body.Close()
+		checkErr(err)
+	}(resp.Body)
+
+	// 解析 JSON
+	err = json.Unmarshal(body, assests)
 	checkErr(err)
 }
 
 // 装扮排名
 func rank() {
-	headers := map[string]string{
-		"accept":             "application/json, text/plain, */*",
-		"content-type":       "application/json",
-		"native_api_from":    "h5",
-		"refer":              fmt.Sprintf("https://www.bilibili.com/h5/mall/suit/detail?id=%v&navhide=1", config.Buy.ItemId),
-		"env":                "prod",
-		"app-key":            "android64",
-		"user-agent":         appUserAgent,
-		"x-bili-trace-id":    genTraceID(),
-		"x-bili-aurora-eid":  config.Bili.XBiliAuroraEid,
-		"x-bili-mid":         config.Cookies.DedeUserID,
-		"x-bili-aurora-zone": "",
-		"bili-bridge-engine": "cronet",
-	}
-
-	params := map[string]string{
-		"access_key":   config.AccessKey,
-		"appkey":       "1d8b6e7d45233436",
-		"csrf":         config.Cookies.BiliJct,
-		"disable_rcmd": "0",
-		"item_id":      config.Buy.ItemId,
-		"part":         "suit",
-		"statistics":   statistics,
-		"ts":           strconv.FormatInt(time.Now().Unix(), 10),
-	}
-
-	sign := appSign(params)
-	params["sign"] = sign
 	ranks := &Rank{}
 
-	_, err := client.R().
-		SetHeaders(headers).
-		SetQueryParams(params).
-		SetResult(ranks).
-		Get("/garb/rank/fan/recent")
+	req, err := http.NewRequest("GET", "https://api.bilibili.com/x/garb/rank/fan/recent", nil)
+	checkErr(err)
 
+	req = commonHeaders(req, fmt.Sprintf("https://www.bilibili.com/h5/mall/suit/detail?id=%v&navhide=1&f_source=shop&from=feed.card", config.Buy.ItemId))
+	req = commonParams(req)
+
+	// 执行请求
+	resp, err := client.Do(req)
+	checkErr(err)
+
+	// 读取响应
+	body, err := io.ReadAll(resp.Body)
+	checkErr(err)
+
+	// 延迟关闭
+	defer func(Body io.ReadCloser) {
+		err = Body.Close()
+		checkErr(err)
+	}(resp.Body)
+
+	// 解析 JSON
+	err = json.Unmarshal(body, ranks)
 	checkErr(err)
 
 	rankInfo = ranks
@@ -213,81 +213,60 @@ func rank() {
 
 // 关于这个装扮的订单情况
 func stat() {
-	headers := map[string]string{
-		"accept":             "application/json, text/plain, */*",
-		"content-type":       "application/json",
-		"native_api_from":    "h5",
-		"refer":              fmt.Sprintf("https://www.bilibili.com/h5/mall/suit/detail?id=%v&navhide=1", config.Buy.ItemId),
-		"env":                "prod",
-		"app-key":            "android64",
-		"user-agent":         appUserAgent,
-		"x-bili-trace-id":    genTraceID(),
-		"x-bili-aurora-eid":  config.Bili.XBiliAuroraEid,
-		"x-bili-mid":         config.Cookies.DedeUserID,
-		"x-bili-aurora-zone": "",
-		"bili-bridge-engine": "cronet",
-	}
+	req, err := http.NewRequest("GET", "https://api.bilibili.com/x/garb/order/user/stat", nil)
+	checkErr(err)
 
-	params := map[string]string{
-		"access_key":   config.AccessKey,
-		"appkey":       "1d8b6e7d45233436",
-		"csrf":         config.Cookies.BiliJct,
-		"disable_rcmd": "0",
-		"item_id":      config.Buy.ItemId,
-		"part":         "suit",
-		"statistics":   statistics,
-		"ts":           strconv.FormatInt(time.Now().Unix(), 10),
-	}
+	req = commonHeaders(req, fmt.Sprintf("https://www.bilibili.com/h5/mall/suit/detail?id=%v&navhide=1&f_source=shop&from=feed.card", config.Buy.ItemId))
+	req = commonParams(req)
 
-	sign := appSign(params)
-	params["sign"] = sign
-
-	_, err := client.R().
-		SetHeaders(headers).
-		SetQueryParams(params).
-		Get("/garb/order/user/stat")
-
+	// 执行请求
+	_, err = client.Do(req)
 	checkErr(err)
 }
 
 // 预约人数及预约状态
 func state() {
-	headers := map[string]string{
-		"accept":             "application/json, text/plain, */*",
-		"content-type":       "application/json",
-		"native_api_from":    "h5",
-		"refer":              fmt.Sprintf("https://www.bilibili.com/h5/mall/suit/detail?id=%v&navhide=1", config.Buy.ItemId),
-		"env":                "prod",
-		"app-key":            "android64",
-		"user-agent":         appUserAgent,
-		"x-bili-trace-id":    genTraceID(),
-		"x-bili-aurora-eid":  config.Bili.XBiliAuroraEid,
-		"x-bili-mid":         config.Cookies.DedeUserID,
-		"x-bili-aurora-zone": "",
-		"bili-bridge-engine": "cronet",
-	}
-
-	params := map[string]string{
-		"access_key":   config.AccessKey,
-		"appkey":       "1d8b6e7d45233436",
-		"csrf":         config.Cookies.BiliJct,
-		"disable_rcmd": "0",
-		"item_id":      config.Buy.ItemId,
-		"part":         "suit",
-		"statistics":   statistics,
-		"ts":           strconv.FormatInt(time.Now().Unix(), 10),
-	}
-
 	reserveInfo := &Reserve{}
-	sign := appSign(params)
-	params["sign"] = sign
 
-	_, err := client.R().
-		SetHeaders(headers).
-		SetResult(reserveInfo).
-		SetQueryParams(params).
-		Get("/garb/user/reserve/state")
+	req, err := http.NewRequest("GET", "https://api.bilibili.com/x/garb/user/reserve/state", nil)
+	checkErr(err)
 
+	req = commonHeaders(req, fmt.Sprintf("https://www.bilibili.com/h5/mall/suit/detail?id=%v&navhide=1&f_source=shop&from=feed.card", config.Buy.ItemId))
+
+	u := url.Values{}
+
+	u.Add("access_key", config.AccessKey)
+	u.Add("appKey", "1d8b6e7d45233436")
+	u.Add("csrf", config.Cookies.BiliJct)
+	u.Add("disable_rcmd", "0")
+	u.Add("item_id", config.Buy.ItemId)
+	u.Add("part", "suit")
+	u.Add("statistics", statistics)
+	u.Add("ts", strconv.FormatInt(time.Now().Unix(), 10))
+
+	// 拼接 Sign, 并格式化字符串
+	params, err := url.QueryUnescape(fmt.Sprintf("%v&sign=%v", u.Encode(), appSign(u)))
+	checkErr(err)
+
+	// 注入灵魂
+	req.URL.RawQuery = params
+
+	// 执行请求
+	resp, err := client.Do(req)
+	checkErr(err)
+
+	// 读取响应
+	body, err := io.ReadAll(resp.Body)
+	checkErr(err)
+
+	// 延迟关闭
+	defer func(Body io.ReadCloser) {
+		err = Body.Close()
+		checkErr(err)
+	}(resp.Body)
+
+	// 解析 JSON
+	err = json.Unmarshal(body, reserveInfo)
 	checkErr(err)
 
 	log.Printf("当前装扮预约人数: %v.", reserveInfo.Data.ReserveCount)
@@ -304,43 +283,44 @@ func state() {
 	}
 }
 
+// 执行预约请求
 func reserve() {
-	headers := map[string]string{
-		"accept":             "application/json, text/plain, */*",
-		"content-type":       "application/json",
-		"native_api_from":    "h5",
-		"refer":              fmt.Sprintf("https://www.bilibili.com/h5/mall/suit/detail?id=%v&navhide=1", config.Buy.ItemId),
-		"env":                "prod",
-		"app-key":            "android64",
-		"user-agent":         appUserAgent,
-		"x-bili-trace-id":    genTraceID(),
-		"x-bili-aurora-eid":  config.Bili.XBiliAuroraEid,
-		"x-bili-mid":         config.Cookies.DedeUserID,
-		"x-bili-aurora-zone": "",
-		"bili-bridge-engine": "cronet",
-	}
+	reserveInfo := &Reserve{}
+	u := url.Values{}
 
-	data := map[string]string{
-		"access_key":   config.AccessKey,
-		"appkey":       "1d8b6e7d45233436",
-		"csrf":         config.Cookies.BiliJct,
-		"disable_rcmd": "0",
-		"item_id":      config.Buy.ItemId,
-		"part":         "suit",
-		"statistics":   statistics,
-		"ts":           strconv.FormatInt(time.Now().Unix(), 10),
-	}
+	u.Add("access_key", config.AccessKey)
+	u.Add("appKey", "1d8b6e7d45233436")
+	u.Add("csrf", config.Cookies.BiliJct)
+	u.Add("disable_rcmd", "0")
+	u.Add("item_id", config.Buy.ItemId)
+	u.Add("part", "suit")
+	u.Add("statistics", statistics)
+	u.Add("ts", strconv.FormatInt(time.Now().Unix(), 10))
 
-	reserveInfo := Reserve{}
-	sign := appSign(data)
-	data["sign"] = sign
+	data, err := url.QueryUnescape(fmt.Sprintf("%v&sign=%v", u.Encode(), appSign(u)))
+	checkErr(err)
 
-	_, err := client.R().
-		SetHeaders(headers).
-		SetResult(reserveInfo).
-		SetFormData(data).
-		Post("/garb/user/reserve")
+	req, err := http.NewRequest("POST", "https://api.bilibili.com/x/garb/user/reserve", strings.NewReader(data))
+	checkErr(err)
 
+	req = commonHeaders(req, fmt.Sprintf("https://www.bilibili.com/h5/mall/suit/detail?id=%v&navhide=1&f_source=shop&from=feed.card", config.Buy.ItemId))
+
+	// 执行请求
+	resp, err := client.Do(req)
+	checkErr(err)
+
+	// 读取响应
+	body, err := io.ReadAll(resp.Body)
+	checkErr(err)
+
+	// 延迟关闭
+	defer func(Body io.ReadCloser) {
+		err = Body.Close()
+		checkErr(err)
+	}(resp.Body)
+
+	// 解析 JSON
+	err = json.Unmarshal(body, reserveInfo)
 	checkErr(err)
 
 	if reserveInfo.Code != 0 {
@@ -348,164 +328,109 @@ func reserve() {
 	}
 }
 
-// 优惠券（有多张优惠券时的情况未收集!）
+// 优惠券
 func coupon() {
-	headers := map[string]string{
-		"accept":             "application/json, text/plain, */*",
-		"content-type":       "application/json",
-		"native_api_from":    "h5",
-		"refer":              fmt.Sprintf("https://www.bilibili.com/h5/mall/suit/detail?id=%v&navhide=1", config.Buy.ItemId),
-		"env":                "prod",
-		"app-key":            "android64",
-		"user-agent":         appUserAgent,
-		"x-bili-trace-id":    genTraceID(),
-		"x-bili-aurora-eid":  config.Bili.XBiliAuroraEid,
-		"x-bili-mid":         config.Cookies.DedeUserID,
-		"x-bili-aurora-zone": "",
-		"bili-bridge-engine": "cronet",
-	}
-
-	params := map[string]string{
-		"access_key":   config.AccessKey,
-		"appkey":       "1d8b6e7d45233436",
-		"csrf":         config.Cookies.BiliJct,
-		"disable_rcmd": "0",
-		"item_id":      config.Buy.ItemId,
-		"part":         "suit",
-		"statistics":   statistics,
-		"ts":           strconv.FormatInt(time.Now().Unix(), 10),
-	}
-
-	c := &Coupon{}
-	sign := appSign(params)
-	params["sign"] = sign
-
-	_, err := client.R().
-		SetHeaders(headers).
-		SetResult(c).
-		SetQueryParams(params).
-		Get("/garb/coupon/usable")
-
+	req, err := http.NewRequest("GET", "https://api.bilibili.com/x/garb/coupon/usable", nil)
 	checkErr(err)
 
-	// 还要再看看
-	if len(c.Data) != 0 && checkCoupon == false {
-		checkCoupon = true
-		log.Println("您有优惠券可以使用喵～")
-		config.Buy.CouponToken = c.Data[0].CouponToken
-		writeConfig()
-	} else if len(c.Data) == 0 && checkCoupon == false {
-		checkCoupon = true
-		if config.Buy.CouponToken != "" {
-			config.Buy.CouponToken = ""
-			writeConfig()
-		}
-	}
+	req = commonHeaders(req, fmt.Sprintf("https://www.bilibili.com/h5/mall/suit/detail?id=%v&navhide=1&f_source=shop&from=feed.card", config.Buy.ItemId))
+	req = commonParams(req)
+
+	// 执行请求
+	resp, err := client.Do(req)
+	checkErr(err)
+
+	// 读取响应
+	body, err := io.ReadAll(resp.Body)
+	checkErr(err)
+
+	// 延迟关闭
+	defer func(Body io.ReadCloser) {
+		err = Body.Close()
+		checkErr(err)
+	}(resp.Body)
+
+	// 解析 JSON
+	err = json.Unmarshal(body, coupons)
+	checkErr(err)
 }
 
 // 创建订单
 func create() {
+	creates := &Create{}
+
 Loop:
 	for {
 		// 1s 循环一次
 		task := time.NewTimer(1 * time.Second)
+		t := time.Now()
+		u := url.Values{}
 
-		headers := map[string]string{
-			"accept":             "application/json, text/plain, */*",
-			"content-type":       "application/x-www-form-urlencoded; charset=utf-8",
-			"native_api_from":    "h5",
-			"refer":              fmt.Sprintf("https://www.bilibili.com/h5/mall/suit/detail?id=%v&navhide=1", config.Buy.ItemId),
-			"env":                "prod",
-			"app-key":            "android64",
-			"user-agent":         appUserAgent,
-			"x-bili-trace-id":    genTraceID(),
-			"x-bili-aurora-eid":  config.Bili.XBiliAuroraEid,
-			"x-bili-mid":         config.Cookies.DedeUserID,
-			"x-bili-aurora-zone": "",
-			"bili-bridge-engine": "cronet",
-		}
+		u.Add("access_key", config.AccessKey)
+		u.Add("add_month", "-1")
+		u.Add("appkey", "1d8b6e7d45233436")
+		u.Add("buy_num", config.Buy.BuyNum)
+		u.Add("coupon_token", config.Buy.CouponToken)
+		u.Add("csrf", config.Cookies.BiliJct)
+		u.Add("currency", "bp")
+		u.Add("disable_rcmd", "0")
+		u.Add("f_source", "shop")
+		u.Add("from", "feed.card")
+		u.Add("from_id", "")
+		u.Add("item_id", config.Buy.ItemId)
+		u.Add("platform", config.Buy.Device)
+		u.Add("statistics", statistics)
+		u.Add("ts", strconv.FormatInt(t.Unix(), 10))
 
-		data := map[string]string{
-			"access_key":   config.AccessKey,
-			"add_month":    "-1",
-			"appkey":       "1d8b6e7d45233436",
-			"buy_num":      config.Buy.BuyNum,
-			"coupon_token": config.Buy.CouponToken,
-			"csrf":         config.Cookies.BiliJct,
-			"currency":     "bp",
-			"disable_rcmd": "0",
-			"from":         "",
-			"from_id":      "",
-			"item_id":      config.Buy.ItemId,
-			"platform":     config.Buy.Device,
-			"statistics":   statistics,
-			"ts":           strconv.FormatInt(time.Now().Unix(), 10),
-		}
-
-		//payload := CreatePayload{
-		//	AccessKey:   config.AccessKey,
-		//	AddMonth:    "-1",
-		//	Appkey:      "1d8b6e7d45233436",
-		//	BuyNum:      config.Buy.BuyNum,
-		//	CouponToken: config.Buy.CouponToken,
-		//	Csrf:        config.Cookies.BiliJct,
-		//	Currency:    "bp",
-		//	DisableRcmd: "0",
-		//	ItemId:      config.Buy.ItemId,
-		//	Platform:    config.Buy.Device,
-		//	Statistics:  statistics,
-		//	Ts:          strconv.FormatInt(time.Now().Unix(), 10),
-		//}
-
-		//t := reflect.TypeOf(payload)
-		//v := reflect.ValueOf(payload)
-		//
-		//va := url.Values{}
-		//
-		//for k := 0; k < t.NumField(); k++ {
-		//	if t.Field(k).Tag.Get("json") == "sign" {
-		//		continue
-		//	}
-		//	va.Add(t.Field(k).Tag.Get("json"), v.Field(k).String())
-		//}
-		//
-		//body, _ := url.QueryUnescape(va.Encode())
-		//sign := strMd5(fmt.Sprintf("%v%v", body, "560c52ccd288fed045859ed18bffd973"))
-		//payload.Sign = sign
-		//
-		//j, err := json.Marshal(payload)
-		//fmt.Println(j)
-
-		sign := appSign(data)
-		data["sign"] = sign
-		creates := &Create{}
-
-		r, err := client.R().
-			SetHeaders(headers).
-			SetFormData(data).
-			SetResult(creates).
-			EnableTrace().
-			Post("/garb/v2/trade/create")
-
+		data, err := url.QueryUnescape(fmt.Sprintf("%v&sign=%v", u.Encode(), appSign(u)))
 		checkErr(err)
 
-		log.Printf("本次请求用时: %v，时间差: %v ms，时间调整:%v ms.", r.Request.TraceInfo().TotalTime, diffTime, config.Buy.TimeBefore)
+		req, err := http.NewRequest("POST", "https://api.bilibili.com/x/garb/v2/trade/create", strings.NewReader(data))
+		checkErr(err)
+
+		req.Header.Set("accept", "application/json, text/plain, */*")
+		req.Header.Set("content-type", "application/x-www-form-urlencoded; charset=utf-8")
+		req.Header.Set("native_api_from", "h5")
+		req.Header.Set("refer", fmt.Sprintf("https://www.bilibili.com/h5/mall/suit/detail?id=%v&navhide=1&f_source=shop&from=feed.card", config.Buy.ItemId))
+		req.Header.Set("env", "prod")
+		req.Header.Set("app-key", "android64")
+		req.Header.Set("user-agent", "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/104.0.0.0 Safari/537.36")
+		req.Header.Set("x-bili-trace-id", genTraceID())
+		req.Header.Set("x-bili-aurora-eid", "")
+		req.Header.Set("x-bili-mid", "")
+		req.Header.Set("x-bili-aurora-zone", "")
+		req.Header.Set("bili-bridge-engine", "cronet")
+
+		resp, err := client.Do(req)
+		checkErr(err)
+
+		elapsed := time.Since(t)
+		log.Printf("本次请求用时: %v，时间差: %v ms，时间调整:%v ms.", elapsed, diffTime, config.Buy.TimeBefore)
+
+		body, err := io.ReadAll(resp.Body)
+		checkErr(err)
+		r := string(body)
+
+		err = json.Unmarshal(body, creates)
+		checkErr(err)
 
 		switch creates.Code {
 		case 0: // 这里好像有问题，还需要再看看
 			if creates.Data.BpEnough == -1 {
-				log.Println(r)
+				log.Println(resp)
 				log.Fatalln("余额不足.")
 			}
 			// 订单号
 			orderId = creates.Data.OrderId
 			if creates.Data.State != "paying" {
-				log.Println(r)
+				log.Println(resp)
 			}
 			break Loop
 		case -3:
 			log.Println(r)
 			log.Fatalln("请将此问题上报给 Mika.")
+		case -101:
+			log.Fatalln(r)
 		case -400:
 			log.Fatalln(r)
 		case -403: //号被封了
@@ -563,51 +488,55 @@ Loop:
 				log.Fatalln("失败次数已达到五次，退出执行...")
 			}
 		}
+
+		err = resp.Body.Close()
+		checkErr(err)
+
 		<-task.C
 	}
 }
 
 // 跟踪订单
 func tradeQuery() {
+	query := &Query{}
+
 Loop:
 	for {
 		task := time.NewTimer(500 * time.Millisecond)
 
-		headers := map[string]string{
-			"accept":             "application/json, text/plain, */*",
-			"content-type":       "application/json",
-			"native_api_from":    "h5",
-			"refer":              fmt.Sprintf("https://www.bilibili.com/h5/mall/suit/detail?id=%v&navhide=1", config.Buy.ItemId),
-			"env":                "prod",
-			"app-key":            "android64",
-			"user-agent":         appUserAgent,
-			"x-bili-trace-id":    genTraceID(),
-			"x-bili-aurora-eid":  config.Bili.XBiliAuroraEid,
-			"x-bili-mid":         config.Cookies.DedeUserID,
-			"x-bili-aurora-zone": "",
-			"bili-bridge-engine": "cronet",
-		}
+		req, err := http.NewRequest("GET", "https://api.bilibili.com/x/garb/trade/query", nil)
+		checkErr(err)
 
-		params := map[string]string{
-			"access_key":   config.AccessKey,
-			"appkey":       "1d8b6e7d45233436",
-			"csrf":         config.Cookies.BiliJct,
-			"disable_rcmd": "0",
-			"order_id":     orderId,
-			"statistics":   statistics,
-			"ts":           strconv.FormatInt(time.Now().Unix(), 10), // 需要测试是否需要续一秒
-		}
+		req = commonHeaders(req, fmt.Sprintf("https://www.bilibili.com/h5/mall/suit/detail?id=%v&navhide=1&f_source=shop&from=feed.card", config.Buy.ItemId))
 
-		sign := appSign(params)
-		params["sign"] = sign
-		query := &Query{}
+		u := url.Values{}
 
-		r, err := client.R().
-			SetHeaders(headers).
-			SetQueryParams(params).
-			SetResult(query).
-			Get("/garb/trade/query")
+		u.Add("access_key", config.AccessKey)
+		u.Add("appKey", "1d8b6e7d45233436")
+		u.Add("csrf", config.Cookies.BiliJct)
+		u.Add("disable_rcmd", "0")
+		u.Add("order_id", orderId)
+		u.Add("statistics", statistics)
+		u.Add("ts", strconv.FormatInt(time.Now().Unix(), 10))
 
+		// 拼接 Sign, 并格式化字符串
+		params, err := url.QueryUnescape(fmt.Sprintf("%v&sign=%v", u.Encode(), appSign(u)))
+		checkErr(err)
+
+		// 注入灵魂
+		req.URL.RawQuery = params
+
+		// 执行请求
+		resp, err := client.Do(req)
+		checkErr(err)
+
+		// 读取响应
+		body, err := io.ReadAll(resp.Body)
+		checkErr(err)
+		r := string(body)
+
+		// 解析 JSON
+		err = json.Unmarshal(body, query)
 		checkErr(err)
 
 		if query.Code == 0 {
@@ -633,79 +562,89 @@ Loop:
 				log.Fatalln("失败次数已达到五次，退出执行...")
 			}
 		}
+
+		err = resp.Body.Close()
+		checkErr(err)
+
 		<-task.C
 	}
 }
 
 // 钱包余额
 func wallet() {
-	headers := map[string]string{
-		"accept":             "application/json, text/plain, */*",
-		"content-type":       "application/json",
-		"native_api_from":    "h5",
-		"refer":              fmt.Sprintf("https://www.bilibili.com/h5/mall/suit/detail?id=%v&navhide=1", config.Buy.ItemId),
-		"env":                "prod",
-		"app-key":            "android64",
-		"user-agent":         appUserAgent,
-		"x-bili-trace-id":    genTraceID(),
-		"x-bili-aurora-eid":  config.Bili.XBiliAuroraEid,
-		"x-bili-mid":         config.Cookies.DedeUserID,
-		"x-bili-aurora-zone": "",
-		"bili-bridge-engine": "cronet",
-	}
+	myWallet := &Wallet{}
 
-	params := map[string]string{
-		"platform": "android",
-	}
-
-	response := &Wallet{}
-
-	_, err := client.R().
-		SetHeaders(headers).
-		SetQueryParams(params).
-		SetResult(response).
-		Get("/garb/user/wallet?platform")
-
+	req, err := http.NewRequest("GET", "https://api.bilibili.com/x/garb/user/wallet", nil)
 	checkErr(err)
 
-	log.Printf("购买完成! 余额: %v.", response.Data.BcoinBalance)
+	req = commonHeaders(req, fmt.Sprintf("https://www.bilibili.com/h5/mall/suit/manage/%v?navhide=1&native.theme=1", config.Buy.ItemId))
+
+	u := url.Values{}
+
+	u.Add("platform", "android")
+
+	// 注入灵魂
+	req.URL.RawQuery = u.Encode()
+
+	// 执行请求
+	resp, err := client.Do(req)
+	checkErr(err)
+
+	// 读取响应
+	body, err := io.ReadAll(resp.Body)
+	checkErr(err)
+
+	// 延迟关闭
+	defer func(Body io.ReadCloser) {
+		err = Body.Close()
+		checkErr(err)
+	}(resp.Body)
+
+	// 解析 JSON
+	err = json.Unmarshal(body, myWallet)
+	checkErr(err)
+
+	log.Printf("购买完成! 余额: %v.", myWallet.Data.BcoinBalance)
 }
 
 // 查询编号等信息
 func suitAsset() {
-	headers := map[string]string{
-		"accept":             "application/json, text/plain, */*",
-		"content-type":       "application/json",
-		"native_api_from":    "h5",
-		"refer":              fmt.Sprintf("https://www.bilibili.com/h5/mall/suit/detail?id=%v&navhide=1", config.Buy.ItemId),
-		"env":                "prod",
-		"app-key":            "android64",
-		"user-agent":         appUserAgent,
-		"x-bili-trace-id":    genTraceID(),
-		"x-bili-aurora-eid":  config.Bili.XBiliAuroraEid,
-		"x-bili-mid":         config.Cookies.DedeUserID,
-		"x-bili-aurora-zone": "",
-		"bili-bridge-engine": "cronet",
-	}
+	mySuit := &SuitAsset{}
 
-	params := map[string]string{
-		"item_id": config.Buy.ItemId,
-		"part":    "suit",
-		"trial":   "0",
-	}
-
-	response := &SuitAsset{}
-
-	_, err := client.R().
-		SetHeaders(headers).
-		SetQueryParams(params).
-		SetResult(response).
-		Get("garb/user/suit/asset")
-
+	req, err := http.NewRequest("GET", "https://api.bilibili.com/x/garb/user/wallet", nil)
 	checkErr(err)
 
-	log.Printf("名称: %v 编号: %v.", itemName, response.Data.Fan.Number)
-	if response.Data.Fan.Number <= 10 {
+	req = commonHeaders(req, fmt.Sprintf("https://www.bilibili.com/h5/mall/suit/manage/%v?navhide=1&native.theme=1", config.Buy.ItemId))
+
+	u := url.Values{}
+
+	u.Add("item_id", config.Buy.ItemId)
+	u.Add("part", "suit")
+	u.Add("trial", "0")
+
+	// 注入灵魂
+	req.URL.RawQuery = u.Encode()
+
+	// 执行请求
+	resp, err := client.Do(req)
+	checkErr(err)
+
+	// 读取响应
+	body, err := io.ReadAll(resp.Body)
+	checkErr(err)
+
+	// 延迟关闭
+	defer func(Body io.ReadCloser) {
+		err = Body.Close()
+		checkErr(err)
+	}(resp.Body)
+
+	// 解析 JSON
+	err = json.Unmarshal(body, mySuit)
+	checkErr(err)
+
+	log.Printf("名称: %v 编号: %v.", itemName, mySuit.Data.Fan.Number)
+	if mySuit.Data.Fan.Number <= 10 {
 		log.Println("恭喜拿下前 10 喵～")
 	}
 }

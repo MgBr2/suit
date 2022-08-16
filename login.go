@@ -1,11 +1,16 @@
 package main
 
 import (
+	"encoding/json"
 	"fmt"
 	qrcodeTerminal "github.com/Baozisoftware/qrcode-terminal-go"
 	"github.com/skip2/go-qrcode"
+	"io"
 	"log"
+	"net/http"
+	"net/url"
 	"strconv"
+	"strings"
 	"time"
 )
 
@@ -16,8 +21,6 @@ func Login() {
 	fmt.Println("\t2. 当前目录下生成二维码图片.")
 	fmt.Println("\t3. APP 打开 URL 登陆.")
 	fmt.Println()
-
-	login.SetBaseURL("https://passport.bilibili.com/x/passport-tv-login/qrcode")
 
 Loop:
 	_, err := fmt.Scanf("%v", &mode)
@@ -46,72 +49,86 @@ Loop:
 
 func getLoginUrl() {
 	auth := &AuthCode{}
+	u := url.Values{}
 
-	data := map[string]string{
-		"appkey":   "4409e2ce8ffd12b8",
-		"local_id": config.Cookies.Buvid, // Buvid
-		"ts":       strconv.FormatInt(time.Now().Unix(), 10),
-	}
+	u.Add("appkey", "4409e2ce8ffd12b8")
+	u.Add("local_id", config.Cookies.Buvid)
+	u.Add("ts", strconv.FormatInt(time.Now().Unix(), 10))
 
-	headers := map[string]string{
-		"buvid":              config.Cookies.Buvid,
-		"user-agent":         tvUserAgent,
-		"session-id":         "",
-		"env":                "prod",
-		"app-key":            "android_tv_yst",
-		"x-bili-trace-id":    genTraceID(),
-		"x-bili-aurora-eid":  config.Bili.XBiliAuroraEid,
-		"x-bili-aurora-zone": "",
-	}
-
-	sign := loginSign(data)
-	data["sign"] = sign
-
-	_, err := login.R().
-		SetResult(auth).
-		SetFormData(data).
-		SetHeaders(headers).
-		Post("/auth_code")
-
+	data, err := url.QueryUnescape(fmt.Sprintf("%v&sign=%v", u.Encode(), tvSign(u)))
 	checkErr(err)
+
+	req, err := http.NewRequest("POST", "https://passport.bilibili.com/x/passport-tv-login/qrcode/auth_code", strings.NewReader(data))
+	checkErr(err)
+
+	req.Header.Set("buvid", config.Cookies.Buvid)
+	req.Header.Set("content-type", "application/x-www-form-urlencoded; charset=utf-8")
+	req.Header.Set("user-agent", tvUserAgent)
+	req.Header.Set("session-id", sessionID)
+	req.Header.Set("env", "prod")
+	req.Header.Set("app-key", "android_tv_yst")
+	req.Header.Set("x-bili-trace-id", genTraceID())
+	req.Header.Set("x-bili-aurora-eid", config.Bili.XBiliAuroraEid)
+	req.Header.Set("x-bili-aurora-zone", "")
+
+	resp, err := login.Do(req)
+	checkErr(err)
+
+	body, err := io.ReadAll(resp.Body)
+	checkErr(err)
+
+	defer func(Body io.ReadCloser) {
+		err = Body.Close()
+		checkErr(err)
+	}(resp.Body)
+
+	err = json.Unmarshal(body, auth)
+	checkErr(err)
+
+	if auth.Code != 0 {
+		log.Println(string(body))
+	}
+
 	qrCodeUrl = auth.Data.Url
 	authCode = auth.Data.AuthCode
 }
 
 func getLoginInfo() {
+	qrCodePoll := &QrcodePoll{}
+
 	for {
 		task := time.NewTimer(3 * time.Second)
+		u := url.Values{}
 
-		data := map[string]string{
-			"appkey":    "4409e2ce8ffd12b8",
-			"auth_code": authCode,
-			"local_id":  config.Cookies.Buvid, // Buvid
-			"ts":        strconv.FormatInt(time.Now().Unix(), 10),
-		}
+		u.Add("appkey", "4409e2ce8ffd12b8")
+		u.Add("auth_code", authCode)
+		u.Add("local_id", config.Cookies.Buvid)
+		u.Add("ts", strconv.FormatInt(time.Now().Unix(), 10))
 
-		headers := map[string]string{
-			"buvid":              config.Cookies.Buvid,
-			"user-agent":         tvUserAgent,
-			"session-id":         "",
-			"env":                "prod",
-			"app-key":            "android_tv_yst",
-			"x-bili-trace-id":    genTraceID(),
-			"x-bili-aurora-eid":  config.Bili.XBiliAuroraEid,
-			"x-bili-aurora-zone": "",
-		}
-
-		sign := loginSign(data)
-		data["sign"] = sign
-		qrCodePoll := &QrcodePoll{}
-
-		_, err := login.R().
-			SetResult(qrCodePoll).
-			SetFormData(data).
-			SetHeaders(headers).
-			Post("/poll")
-
+		data, err := url.QueryUnescape(fmt.Sprintf("%v&sign=%v", u.Encode(), tvSign(u)))
 		checkErr(err)
-		//fmt.Println(resp)
+
+		req, err := http.NewRequest("POST", "https://passport.bilibili.com/x/passport-tv-login/qrcode/poll", strings.NewReader(data))
+		checkErr(err)
+
+		req.Header.Set("buvid", config.Cookies.Buvid)
+		req.Header.Set("content-type", "application/x-www-form-urlencoded; charset=utf-8")
+		req.Header.Set("user-agent", tvUserAgent)
+		req.Header.Set("session-id", sessionID)
+		req.Header.Set("env", "prod")
+		req.Header.Set("app-key", "android_tv_yst")
+		req.Header.Set("x-bili-trace-id", genTraceID())
+		req.Header.Set("x-bili-aurora-eid", config.Bili.XBiliAuroraEid)
+		req.Header.Set("x-bili-aurora-zone", "")
+
+		resp, err := login.Do(req)
+		checkErr(err)
+
+		body, err := io.ReadAll(resp.Body)
+		checkErr(err)
+
+		err = json.Unmarshal(body, qrCodePoll)
+		checkErr(err)
 
 		if qrCodePoll.Code == 0 {
 			config.AccessKey = qrCodePoll.Data.AccessToken
@@ -138,6 +155,9 @@ func getLoginInfo() {
 			writeConfig()
 			break
 		}
+
+		err = resp.Body.Close()
+		checkErr(err)
 
 		<-task.C
 	}

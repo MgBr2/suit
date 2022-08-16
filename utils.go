@@ -2,7 +2,6 @@ package main
 
 import (
 	"bufio"
-	"bytes"
 	"crypto/md5"
 	"crypto/rand"
 	"encoding/hex"
@@ -12,11 +11,12 @@ import (
 	"github.com/go-resty/resty/v2"
 	"io/ioutil"
 	"log"
+	"net/http"
+	"net/http/cookiejar"
 	"net/url"
 	"os"
 	"reflect"
 	"regexp"
-	"sort"
 	"strconv"
 	"strings"
 	"time"
@@ -28,7 +28,7 @@ func writeConfig() {
 	result, err := json.MarshalIndent(config, "", " ")
 	checkErr(err)
 
-	err = ioutil.WriteFile(fileName, result, 644)
+	err = os.WriteFile(fileName, result, 644)
 	checkErr(err)
 }
 
@@ -108,6 +108,7 @@ func formatConfig() {
 	sdkInt := regexp.MustCompile(`sdkInt/([\da-zA-z.]+)`)
 
 	appBuild := appBuildVersion.FindStringSubmatch(ua)[1]
+	fmt.Println(appBuild)
 	appVersion := fmt.Sprintf("%v.%v.%v", string(appBuild[0]), appBuild[1:3], string(appBuild[3]))
 
 	config.Bili.AppVersion = appVersion
@@ -166,50 +167,16 @@ func genSessionID() {
 }
 
 // 计算签名 (tv端)
-func loginSign(params map[string]string) string {
-	var query string
-	var buffer bytes.Buffer
-
-	keys := make([]string, 0, len(params))
-	for k := range params {
-		keys = append(keys, k)
-	}
-	sort.Strings(keys)
-	for _, k := range keys {
-		//query += fmt.Sprintf("%v=%v&", k, params[k])
-		buffer.WriteString(k)
-		buffer.WriteString("=")
-		buffer.WriteString(params[k])
-		buffer.WriteString("&")
-	}
-	query = strings.TrimRight(buffer.String(), "&")
-	//fmt.Println(query)
-	sign := strMd5(fmt.Sprintf("%v%v", query, "59b43e04ad6965f34319062b478f83dd"))
-	//fmt.Println(sign)
+func tvSign(u url.Values) string {
+	str, _ := url.QueryUnescape(u.Encode())
+	sign := strMd5(fmt.Sprintf("%v%v", str, "59b43e04ad6965f34319062b478f83dd"))
 	return sign
 }
 
 // 计算签名 (app端)
-func appSign(params map[string]string) string {
-	var query string
-	var buffer bytes.Buffer
-
-	keys := make([]string, 0, len(params))
-	for k := range params {
-		keys = append(keys, k)
-	}
-	sort.Strings(keys)
-	for _, k := range keys {
-		//query += fmt.Sprintf("%v=%v&", k, params[k])
-		buffer.WriteString(k)
-		buffer.WriteString("=")
-		buffer.WriteString(params[k])
-		buffer.WriteString("&")
-	}
-	query = strings.TrimRight(buffer.String(), "&")
-	//fmt.Println(query)
-	sign := strMd5(fmt.Sprintf("%v%v", query, "560c52ccd288fed045859ed18bffd973"))
-	//fmt.Println(sign)
+func appSign(u url.Values) string {
+	str, _ := url.QueryUnescape(u.Encode())
+	sign := strMd5(fmt.Sprintf("%v%v", str, "560c52ccd288fed045859ed18bffd973"))
 	return sign
 }
 
@@ -253,7 +220,10 @@ func formatStatistics() {
 		Version:  config.Bili.AppVersion,
 		Abtest:   "",
 	}
+
 	s, err := json.Marshal(static)
+	checkErr(err)
+
 	statistics = url.QueryEscape(string(s))
 	checkErr(err)
 }
@@ -332,8 +302,8 @@ func outPutRank() {
 }
 
 /*
-	NTP 时间同步
-	不论是 Win 还是 Linux, 时间都会跑着跑着就偏掉，Mika 必须给你开个协程来帮你校准喵!
+NTP 时间同步
+不论是 Win 还是 Linux, 时间都会跑着跑着就偏掉，Mika 必须给你开个协程来帮你校准喵!
 */
 func checkNTP() {
 	var notice bool
@@ -452,3 +422,113 @@ func formatSecond(seconds int64) string {
 	}
 	return msg
 }
+
+// 常用的 headers 参数
+func commonHeaders(req *http.Request, refer string) *http.Request {
+	req.Header.Set("accept", "application/json, text/plain, */*")
+	req.Header.Set("content-type", "application/json")
+	req.Header.Set("native_api_from", "h5")
+	req.Header.Set("refer", refer)
+	req.Header.Set("env", "prod")
+	req.Header.Set("app-key", "android64")
+	req.Header.Set("user-agent", appUserAgent)
+	req.Header.Set("x-bili-trace-id", genTraceID())
+	req.Header.Set("x-bili-aurora-eid", config.Bili.XBiliAuroraEid)
+	req.Header.Set("x-bili-mid", config.Cookies.DedeUserID)
+	req.Header.Set("x-bili-aurora-zone", "")
+	req.Header.Set("bili-bridge-engine", "cronet")
+
+	return req
+}
+
+// 常用的 Params 参数
+func commonParams(req *http.Request) *http.Request {
+	u := url.Values{}
+
+	u.Add("access_key", config.AccessKey)
+	u.Add("appKey", "1d8b6e7d45233436")
+	u.Add("csrf", config.Cookies.BiliJct)
+	u.Add("disable_rcmd", "0")
+	u.Add("item_id", config.Buy.ItemId)
+	u.Add("statistics", statistics)
+	u.Add("ts", strconv.FormatInt(time.Now().Unix(), 10))
+
+	// 拼接 Sign, 并格式化字符串
+	params, err := url.QueryUnescape(fmt.Sprintf("%v&sign=%v", u.Encode(), appSign(u)))
+	checkErr(err)
+
+	// 注入灵魂
+	req.URL.RawQuery = params
+
+	return req
+}
+
+// 初始化 HTTP Client
+func initialClient() {
+	jar, err := cookiejar.New(nil)
+	checkErr(err)
+
+	cookieURL, _ := url.Parse("https://api.bilibili.com")
+
+	cookies := []*http.Cookie{
+		{Name: "SESSDATA", Value: config.Cookies.SESSDATA},
+		{Name: "bili_jct", Value: config.Cookies.BiliJct},
+		{Name: "DedeUserID", Value: config.Cookies.DedeUserID},
+		{Name: "DedeUserID__ckMd5", Value: config.Cookies.DedeUserIDCkMd5},
+		{Name: "sid", Value: config.Cookies.Sid},
+		{Name: "Buvid", Value: config.Cookies.Buvid},
+	}
+
+	jar.SetCookies(cookieURL, cookies)
+
+	client = &http.Client{
+		Jar:     jar,
+		Timeout: 2 * time.Second,
+	}
+
+	login = &http.Client{
+		Timeout: 3 * time.Second,
+	}
+}
+
+// 检测优惠券
+func checkCoupon() {
+	couponList := len(coupons.Data)
+
+	if couponList == 0 && config.Buy.CouponToken != "" {
+		log.Println("由于优惠券不可用，已帮您清除优惠券喵～")
+		config.Buy.CouponToken = ""
+		writeConfig()
+	} else if couponList == 1 {
+		log.Println("已帮您自动设置好优惠券喵～")
+		config.Buy.CouponToken = coupons.Data[0].CouponToken
+		writeConfig()
+		log.Printf("优惠券名称：%v\n", coupons.Data[0].Title)
+	} else if couponList > 1 {
+		// 已经选好优惠券了
+		for _, v := range coupons.Data {
+			if v.CouponToken == config.Buy.CouponToken {
+				return
+			}
+		}
+		// 没选好
+		log.Printf("当前有：%v 张优惠券，请自行选择喵～\n", couponList)
+		fmt.Println()
+		for k, v := range coupons.Data {
+			fmt.Printf("\t%v. %v\n", k+1, v.Title)
+		}
+		fmt.Println()
+		fmt.Print("请输入: ")
+		inputReader := bufio.NewReader(os.Stdin)
+		num, err := inputReader.ReadString('\n')
+		checkErr(err)
+
+		intNUm, err := strconv.Atoi(num)
+		checkErr(err)
+
+		config.Buy.CouponToken = coupons.Data[intNUm].CouponToken
+		writeConfig()
+	}
+}
+
+//

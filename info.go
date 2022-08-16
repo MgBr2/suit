@@ -220,6 +220,24 @@ type Coupon struct {
 	} `json:"data"`
 }
 
+type CreateBody struct {
+	AccessKey   string `json:"access_key"`
+	AddMonth    string `json:"add_month"`
+	Appkey      string `json:"appkey"`
+	BuyNum      string `json:"buy_num"`
+	CouponToken string `json:"coupon_token"`
+	Csrf        string `json:"csrf"`
+	Currency    string `json:"currency"`
+	DisableRcmd string `json:"disable_rcmd"`
+	From        string `json:"from"`
+	FromId      string `json:"from_id"`
+	ItemId      string `json:"item_id"`
+	Platform    string `json:"platform"`
+	Statistics  string `json:"statistics"`
+	Ts          string `json:"ts"`
+	Sign        string `json:"sign"`
+}
+
 //type CreatePayload struct {
 //	AccessKey   string `json:"access_key"`
 //	AddMonth    string `json:"add_month"`

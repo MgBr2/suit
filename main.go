@@ -9,8 +9,6 @@ import (
 	"os"
 	"strconv"
 	"time"
-
-	"github.com/go-resty/resty/v2"
 )
 
 const (
@@ -29,8 +27,8 @@ var (
 	bp, price                                float64
 	rankInfo                                 *Rank
 	config                                   = &Config{}
-	client                                   = resty.New()
-	login                                    = resty.New()
+	client                                   = &http.Client{}
+	login                                    = &http.Client{}
 )
 
 // 初始化
@@ -73,22 +71,11 @@ func init() {
 	// 检测一下配置文件
 	checkConfig()
 
-	// 设置 baseURL
-	client.SetBaseURL("https://api.bilibili.com/x")
-
-	// 设置 Cookies
-	cookies := []*http.Cookie{
-		{Name: "SESSDATA", Value: config.Cookies.SESSDATA},
-		{Name: "bili_jct", Value: config.Cookies.BiliJct},
-		{Name: "DedeUserID", Value: config.Cookies.DedeUserID},
-		{Name: "DedeUserID__ckMd5", Value: config.Cookies.DedeUserIDCkMd5},
-		{Name: "sid", Value: config.Cookies.Sid},
-		{Name: "Buvid", Value: config.Cookies.Buvid},
-	}
-	client.SetCookies(cookies)
-
 	// 转换 Statistics
 	formatStatistics()
+
+	// 初始化 HTTP Client
+	initialClient()
 }
 
 func main() {
@@ -131,24 +118,13 @@ func main() {
 	coupon()
 	state()
 
+	// 设置优惠券
+	checkCoupon()
+
 	// 输出编号列表
 	outPutRank()
 
-	// 使用本地时间等待开始，在开售前三十秒结束进程
-	//waitToStart()
-
-	// 获取b站时间，在开售前二十八秒结束进程
-	//now()
-
-	/*
-		两个条件:
-		1. 请求 b 站时间时的 HTTP 响应时间
-		2. 自行设定的 time_before
-	*/
-	//time.Sleep(time.Duration(27000-waitTime-int64(config.Buy.TimeBefore)) * time.Millisecond)
-
-	// 需要测试，尚不清楚 b 站的 NTP 服务是否相同
-	// 使用本地时间等待开始，并监测 NTP 延迟，在开售前十秒结束进程
+	// 等待开始
 	waitToStart()
 
 	// 留一秒给模拟进入购买界面
