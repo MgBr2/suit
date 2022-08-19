@@ -14,6 +14,10 @@ import (
 	"time"
 )
 
+/*
+	1. 需要验证登录是否会影响风控
+*/
+
 func Login() {
 	var mode int
 	log.Println("Cookies 必要参数缺失, 需要进行扫码登录，请选择登陆模式 (输入数字).")

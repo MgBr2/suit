@@ -303,7 +303,18 @@ func reserve() {
 	req, err := http.NewRequest("POST", "https://api.bilibili.com/x/garb/user/reserve", strings.NewReader(data))
 	checkErr(err)
 
-	req = commonHeaders(req, fmt.Sprintf("https://www.bilibili.com/h5/mall/suit/detail?id=%v&navhide=1&f_source=shop&from=feed.card", config.Buy.ItemId))
+	req.Header.Set("accept", "application/json, text/plain, */*")
+	req.Header.Set("content-type", "application/x-www-form-urlencoded; charset=utf-8")
+	req.Header.Set("native_api_from", "h5")
+	req.Header.Set("refer", fmt.Sprintf("https://www.bilibili.com/h5/mall/suit/detail?id=%v&navhide=1&f_source=shop&from=feed.card", config.Buy.ItemId))
+	req.Header.Set("env", "prod")
+	req.Header.Set("app-key", "android64")
+	req.Header.Set("user-agent", "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/104.0.0.0 Safari/537.36")
+	req.Header.Set("x-bili-trace-id", genTraceID())
+	req.Header.Set("x-bili-aurora-eid", "")
+	req.Header.Set("x-bili-mid", "")
+	req.Header.Set("x-bili-aurora-zone", "")
+	req.Header.Set("bili-bridge-engine", "cronet")
 
 	// 执行请求
 	resp, err := client.Do(req)
@@ -324,7 +335,10 @@ func reserve() {
 	checkErr(err)
 
 	if reserveInfo.Code != 0 {
-		go log.Println("预约失败了喵！")
+		log.Println(string(body))
+		log.Println("预约失败了喵！")
+	} else {
+		log.Println("预约成功了喵～")
 	}
 }
 

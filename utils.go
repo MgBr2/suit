@@ -8,8 +8,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/beevik/ntp"
-	"github.com/go-resty/resty/v2"
-	"io/ioutil"
 	"log"
 	"net/http"
 	"net/http/cookiejar"
@@ -34,7 +32,7 @@ func writeConfig() {
 
 // 读取配置文件
 func readConfig() {
-	jsonFile, err := ioutil.ReadFile(fileName)
+	jsonFile, err := os.ReadFile(fileName)
 	checkErr(err)
 	err = json.Unmarshal(jsonFile, config)
 	checkErr(err)
@@ -335,49 +333,6 @@ func checkNTP() {
 		}
 
 		<-task.C
-	}
-}
-
-// 获取b站时间
-func now() {
-	result := &Now{}
-	clock := resty.New()
-	for {
-		resp, err := clock.R().
-			SetResult(result).
-			EnableTrace().
-			SetHeader("user-agent", pcUserAgent).
-			Get("http://api.bilibili.com/x/report/click/now")
-
-		checkErr(err)
-
-		if result.Data.Now >= startTime-28 {
-			//waitTime = r.Request.TraceInfo().TotalTime.Milliseconds()
-			//reviceTime := r.ReceivedAt().UnixMicro()
-			//timeLayout := "2006-01-02 15:04:05.000000"
-			//t := time.Unix(0, reviceTime*int64(time.Microsecond))
-			log.Println("停止获取 b 站时间...")
-
-			ti := resp.Request.TraceInfo()
-
-			fmt.Println()
-			fmt.Println("  Received At   :", resp.ReceivedAt())
-			fmt.Println()
-			fmt.Println("  DNSLookup     :", ti.DNSLookup)
-			fmt.Println("  ConnTime      :", ti.ConnTime)
-			fmt.Println("  TCPConnTime   :", ti.TCPConnTime)
-			fmt.Println("  TLSHandshake  :", ti.TLSHandshake)
-			fmt.Println("  ServerTime    :", ti.ServerTime)
-			fmt.Println("  ResponseTime  :", ti.ResponseTime)
-			fmt.Println("  TotalTime     :", ti.TotalTime)
-			fmt.Println("  IsConnReused  :", ti.IsConnReused)
-			fmt.Println("  IsConnWasIdle :", ti.IsConnWasIdle)
-			fmt.Println("  ConnIdleTime  :", ti.ConnIdleTime)
-			fmt.Println("  RequestAttempt:", ti.RequestAttempt)
-			fmt.Println()
-			log.Println("Performance Test.")
-			break
-		}
 	}
 }
 
