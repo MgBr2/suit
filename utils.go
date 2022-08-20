@@ -304,35 +304,37 @@ NTP 时间同步
 不论是 Win 还是 Linux, 时间都会跑着跑着就偏掉，Mika 必须给你开个协程来帮你校准喵!
 */
 func checkNTP() {
-	var notice bool
+	var totalTime time.Duration
 
-	for {
-		task := time.NewTimer(15 * time.Second)
+	now := time.Now()
 
-		ntpTime, err := ntp.Time("ntp.aliyun.com")
-		n := time.Now()
-
+	if now.Unix()+30 > startTime && now.Unix() < startTime {
+		response, err := ntp.Query("ntp.aliyun.com")
 		checkErr(err)
+		diffTime = response.ClockOffset.Milliseconds()
+	} else if now.Unix() < startTime {
+		log.Println("正在检测时间差，请稍等一下喵~")
+		for i := 1; i <= 10; i++ {
+			task := time.NewTimer(1 * time.Second)
 
-		diffTime = n.UnixMilli() - ntpTime.UnixMilli()
+			response, err := ntp.Query("ntp.aliyun.com")
+			checkErr(err)
 
-		if notice == false {
-			log.Printf("当前本地时间差: %v ms.", diffTime)
-			log.Println("别担心, Mika 会帮你调整的喵~")
-			notice = true
+			totalTime += response.ClockOffset
+			<-task.C
 		}
+		diffTime = totalTime.Milliseconds() / 10
+	}
 
-		if diffTime >= 1000 || diffTime <= -1000 {
-			log.Println("你的本地时间差太多了喵! Mika 觉得你需要做个 NTP 时间同步喵!")
-			log.Fatalln("推荐的 NTP 服务器: ntp.aliyun.com")
-		}
+	log.Printf("当前本地时间差: %v ms.", diffTime)
 
-		// 接近抢购时间，不要影响程序执行
-		if n.Unix() > startTime+30 {
-			break
-		}
+	if diffTime >= 1000 || diffTime <= -1000 {
+		log.Println("你的本地时间差太多了喵! Mika 觉得你需要做个 NTP 时间同步喵!")
+		log.Fatalln("推荐的 NTP 服务器: ntp.aliyun.com")
+	}
 
-		<-task.C
+	if diffTime != 0 {
+		log.Println("别担心, Mika 会帮你调整的喵~")
 	}
 }
 

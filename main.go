@@ -63,6 +63,8 @@ func init() {
 		config.Buy.TimeBefore = timeBefore
 	}
 
+	writeConfig()
+
 	i, err := strconv.Atoi(config.Buy.BuyNum)
 	intBuyNum = i
 	checkErr(err)
@@ -96,9 +98,6 @@ func main() {
 		log.Printf("当前设置的购买数量为: %v", config.Buy.BuyNum)
 	}
 
-	// 检测时间差
-	go checkNTP()
-
 	// 登陆验证
 	nav()
 	outPrintAccount()
@@ -109,6 +108,9 @@ func main() {
 	// 获取装扮信息
 	detail()
 	outPrintDetail()
+
+	// 检测时间差
+	checkNTP()
 
 	// 大聪明出现!!
 	asset()

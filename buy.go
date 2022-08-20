@@ -591,7 +591,17 @@ func wallet() {
 	req, err := http.NewRequest("GET", "https://api.bilibili.com/x/garb/user/wallet", nil)
 	checkErr(err)
 
-	req = commonHeaders(req, fmt.Sprintf("https://www.bilibili.com/h5/mall/suit/manage/%v?navhide=1&native.theme=1", config.Buy.ItemId))
+	req.Header.Set("content-type", "application/json")
+	req.Header.Set("native_api_from", "h5")
+	req.Header.Set("refer", fmt.Sprintf("https://www.bilibili.com/h5/mall/suit/manage/%v?navhide=1&native.theme=1", config.Buy.ItemId))
+	req.Header.Set("env", "prod")
+	req.Header.Set("app-key", "android64")
+	req.Header.Set("user-agent", appUserAgent)
+	req.Header.Set("x-bili-trace-id", genTraceID())
+	req.Header.Set("x-bili-aurora-eid", config.Bili.XBiliAuroraEid)
+	req.Header.Set("x-bili-mid", config.Cookies.DedeUserID)
+	req.Header.Set("x-bili-aurora-zone", "")
+	req.Header.Set("bili-bridge-engine", "cronet")
 
 	u := url.Values{}
 
@@ -625,10 +635,20 @@ func wallet() {
 func suitAsset() {
 	mySuit := &SuitAsset{}
 
-	req, err := http.NewRequest("GET", "https://api.bilibili.com/x/garb/user/wallet", nil)
+	req, err := http.NewRequest("GET", "https://api.bilibili.com/x/garb/user/suit/asset", nil)
 	checkErr(err)
 
-	req = commonHeaders(req, fmt.Sprintf("https://www.bilibili.com/h5/mall/suit/manage/%v?navhide=1&native.theme=1", config.Buy.ItemId))
+	req.Header.Set("content-type", "application/json")
+	req.Header.Set("native_api_from", "h5")
+	req.Header.Set("refer", fmt.Sprintf("https://www.bilibili.com/h5/mall/suit/manage/%v?navhide=1&native.theme=1", config.Buy.ItemId))
+	req.Header.Set("env", "prod")
+	req.Header.Set("app-key", "android64")
+	req.Header.Set("user-agent", appUserAgent)
+	req.Header.Set("x-bili-trace-id", genTraceID())
+	req.Header.Set("x-bili-aurora-eid", config.Bili.XBiliAuroraEid)
+	req.Header.Set("x-bili-mid", config.Cookies.DedeUserID)
+	req.Header.Set("x-bili-aurora-zone", "")
+	req.Header.Set("bili-bridge-engine", "cronet")
 
 	u := url.Values{}
 
