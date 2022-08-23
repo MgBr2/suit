@@ -24,6 +24,10 @@
     "sid": "",
     "Buvid": ""
   },
+  "device": {
+    "b_3": "",
+    "b_4": ""
+  },
   "phone": {
     "android_version": "",
     "android_api_level": "",

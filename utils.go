@@ -15,6 +15,7 @@ import (
 	"os"
 	"reflect"
 	"regexp"
+	"sort"
 	"strconv"
 	"strings"
 	"time"
@@ -304,26 +305,31 @@ NTP 时间同步
 不论是 Win 还是 Linux, 时间都会跑着跑着就偏掉，Mika 必须给你开个协程来帮你校准喵!
 */
 func checkNTP() {
-	var totalTime time.Duration
+	var checkTime []int
+	var totalTime int
 
 	now := time.Now()
 
-	if now.Unix()+30 > startTime && now.Unix() < startTime {
+	if now.Unix() > startTime {
 		response, err := ntp.Query("ntp.aliyun.com")
 		checkErr(err)
 		diffTime = response.ClockOffset.Milliseconds()
-	} else if now.Unix() < startTime {
+	} else if now.Unix()+60 < startTime {
 		log.Println("正在检测时间差，请稍等一下喵~")
-		for i := 1; i <= 10; i++ {
+		for i := 1; i <= 12; i++ {
 			task := time.NewTimer(1 * time.Second)
 
 			response, err := ntp.Query("ntp.aliyun.com")
 			checkErr(err)
 
-			totalTime += response.ClockOffset
+			checkTime = append(checkTime, int(response.ClockOffset.Milliseconds()))
 			<-task.C
 		}
-		diffTime = totalTime.Milliseconds() / 10
+		sort.Ints(checkTime)
+		for i := 1; i < 11; i++ {
+			totalTime += checkTime[i]
+		}
+		diffTime = int64(totalTime / 10)
 	}
 
 	log.Printf("当前本地时间差: %v ms.", diffTime)

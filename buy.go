@@ -6,6 +6,7 @@ import (
 	"io"
 	"log"
 	"net/http"
+	"net/http/cookiejar"
 	"net/url"
 	"strconv"
 	"strings"
@@ -431,13 +432,13 @@ Loop:
 		switch creates.Code {
 		case 0: // 这里好像有问题，还需要再看看
 			if creates.Data.BpEnough == -1 {
-				log.Println(resp)
+				log.Println(r)
 				log.Fatalln("余额不足.")
 			}
 			// 订单号
 			orderId = creates.Data.OrderId
 			if creates.Data.State != "paying" {
-				log.Println(resp)
+				log.Println(r)
 			}
 			break Loop
 		case -3:
@@ -681,4 +682,42 @@ func suitAsset() {
 	if mySuit.Data.Fan.Number <= 10 {
 		log.Println("恭喜拿下前 10 喵～")
 	}
+}
+
+func mall() {
+	jar, err := cookiejar.New(nil)
+	checkErr(err)
+
+	cookieURL, _ := url.Parse("https://www.bilibili.com")
+
+	cookies := []*http.Cookie{
+		{Name: "SESSDATA", Value: config.Cookies.SESSDATA},
+		{Name: "bili_jct", Value: config.Cookies.BiliJct},
+		{Name: "DedeUserID", Value: config.Cookies.DedeUserID},
+		{Name: "DedeUserID__ckMd5", Value: config.Cookies.DedeUserIDCkMd5},
+		{Name: "sid", Value: config.Cookies.Sid},
+		{Name: "Buvid", Value: config.Cookies.Buvid},
+		{Name: "innersign", Value: "0"},
+	}
+
+	jar.SetCookies(cookieURL, cookies)
+
+	bili := &http.Client{
+		Jar:     jar,
+		Timeout: 2 * time.Second,
+	}
+
+	req, err := http.NewRequest("GET", "https://www.bilibili.com/h5/mall/home?navhide=1&from=myservice&native.theme=1", nil)
+	checkErr(err)
+
+	req.Header.Set("user-agent", appUserAgent)
+	req.Header.Set("accept", "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9")
+	req.Header.Set("x-requested-with", "tv.danmaku.bili")
+	req.Header.Set("sec-fetch-site", "none")
+	req.Header.Set("sec-fetch-mode", "navigate")
+	req.Header.Set("sec-fetch-user", "?1")
+	req.Header.Set("sec-fetch-dest", "document")
+
+	_, err = bili.Do(req)
+	checkErr(err)
 }

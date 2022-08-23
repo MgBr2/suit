@@ -36,6 +36,10 @@ type Config struct {
 		Sid             string `json:"sid"`
 		Buvid           string `json:"Buvid"`
 	} `json:"cookies"`
+	Device struct {
+		B3 string `json:"b_3"`
+		B4 string `json:"b_4"`
+	} `json:"device"`
 	Phone struct {
 		AndroidVersion  string `json:"android_version"`
 		AndroidApiLevel string `json:"android_api_level"`
@@ -218,4 +222,23 @@ type Coupon struct {
 		State           int           `json:"state"`
 		PriorityItem    int           `json:"priority_item"`
 	} `json:"data"`
+}
+
+type Spi struct {
+	Code int `json:"code"`
+	Data struct {
+		B3 string `json:"b_3"`
+		B4 string `json:"b_4"`
+	} `json:"data"`
+	Message string `json:"message"`
+}
+
+type logMsg struct {
+	SuitId     int    `json:"suit_id"`
+	UpMid      int    `json:"up_mid"`
+	PageName   string `json:"page_name"`
+	ModuleName string `json:"module_name"`
+	Lsid       string `json:"lsid"`
+	BuvidFp    string `json:"buvid_fp"`
+	Buvid4     string `json:"buvid4"`
 }

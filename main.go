@@ -98,7 +98,10 @@ func main() {
 		log.Printf("当前设置的购买数量为: %v", config.Buy.BuyNum)
 	}
 
+	mall()
+
 	// 登陆验证
+	spi()
 	nav()
 	outPrintAccount()
 
