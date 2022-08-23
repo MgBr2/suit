@@ -92,6 +92,5 @@
 ```
 
 # Author
-[**超急玛丽**](https://space.bilibili.com/24924450)  
-[**恋利普贝当**](https://space.bilibili.com/2932835)
+[**永雏塔菲**](https://space.bilibili.com/1265680561)  
 
