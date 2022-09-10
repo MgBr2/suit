@@ -8,6 +8,8 @@
 
 ## Notice
 - Because of the regulars from Bilibili, using this script to purchase items may let your account be banned, which means that you can not purchase items anymore.
+- Please notice that ***DO NOT*** transact the items, because it's cheating behaviour, which will make result in your items being revoked with your property loss.
+- I don't suggest using your major account for this script, the attitude of the administrator is stricter than before. She would ban your account forever instead of a period of one year.
 - Login interface maybe has some issues, which will cause a forced logout for your account from all devices.
 
 ## 简介
