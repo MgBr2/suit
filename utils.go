@@ -135,6 +135,9 @@ func formatTvVersion() {
 			tvVersion += fmt.Sprintf("%02d", i)
 		case 2:
 			tvVersion += fmt.Sprintf("%03d", i)
+		case 3:
+			tvVersion = tvVersion[:len(tvVersion)-1]
+			tvVersion += fmt.Sprintf("%d", i)
 		default:
 			log.Fatalln("error!")
 		}
@@ -310,11 +313,7 @@ func checkNTP() {
 
 	now := time.Now()
 
-	if now.Unix() > startTime {
-		response, err := ntp.Query("ntp.aliyun.com")
-		checkErr(err)
-		diffTime = response.ClockOffset.Milliseconds()
-	} else if now.Unix()+60 < startTime {
+	if now.Unix()+60 < startTime {
 		log.Println("正在检测时间差，请稍等一下喵~")
 		for i := 1; i <= 12; i++ {
 			task := time.NewTimer(1 * time.Second)
@@ -330,6 +329,10 @@ func checkNTP() {
 			totalTime += checkTime[i]
 		}
 		diffTime = int64(totalTime / 10)
+	} else {
+		response, err := ntp.Query("ntp.aliyun.com")
+		checkErr(err)
+		diffTime = response.ClockOffset.Milliseconds()
 	}
 
 	log.Printf("当前本地时间差: %v ms.", diffTime)
